@@ -1,15 +1,17 @@
 
 import csv
+import math
 import numpy as np
 from collections import defaultdict
 import pandas as pd
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
+from connect_sql import addColumnsSQL, addDataSQL, changeColumnType, retrieveDataSQL, returnColumns
 
-
-def extractData():
+#Extract data from the csv file
+def extractData(filename):
     players = {}
 
-    with open('nba-players-stats/Seasons_Stats.csv', "r") as csvFile:
+    with open(filename, "r") as csvFile:
         df = pd.read_csv(csvFile)
         players['name'] = df.Player
         players['season'] = df.Year
@@ -20,23 +22,23 @@ def extractData():
         players['min_played'] = df.MP
         players['3PT_rate'] = df.ThreePAr  # 3PT/FGA
         players['FT_rate'] = df.FTr  # FT/FGA
-        players['total_RB_%'] = df.TRBperc
-        players['assist_%'] = df.ASTperc
-        players['steal_%'] = df.STLperc
-        players['block_%'] = df.BLKperc
-        players['turnover_%'] = df.TOVperc
+        players['total_RB_perc'] = df.TRBperc
+        players['assist_perc'] = df.ASTperc
+        players['steal_perc'] = df.STLperc
+        players['block_perc'] = df.BLKperc
+        players['turnover_perc'] = df.TOVperc
         players['FG'] = df.FG
         players['FG_attempts'] = df.FGA
-        players['FG_%'] = df.FGperc
+        players['FG_perc'] = df.FGperc
         players['2PT'] = df.TwoP
         players['2PT_attempts'] = df.TwoPA
-        players['2PT_%'] = df.TwoPperc
+        players['2PT_perc'] = df.TwoPperc
         players['3PT'] = df.ThreeP
         players['3PT_attempts'] = df.ThreePA
-        players['3PT_%'] = df.ThreePperc
+        players['3PT_perc'] = df.ThreePperc
         players['FT'] = df.FT
         players['FT_attempts'] = df.FTA
-        players['FT_%'] = df.FTperc
+        players['FT_perc'] = df.FTperc
         players['Off_rebounds'] = df.ORB
         players['Def_rebounds'] = df.DRB
         players['all_rebounds'] = df.TRB
@@ -47,18 +49,20 @@ def extractData():
         players['fouls'] = df.PF
         players['points'] = df.PTS
 
-    csvFile.close()
 
     return players
 
+#Create a dictionary that uses the player name as the key
 def createPlayerDictionary(players):
 
-    player_stats = defaultdict()
+    playerStats = defaultdict()
+    playerArr    = []
+
     row = 0
 
     for name in players['name']:
-        if name not in player_stats:
-            player_stats[name] = []
+        if name not in playerStats:
+            playerStats[name] = []
 
         newStats = []
         newStats.append(players['name'][row])               #0
@@ -70,23 +74,23 @@ def createPlayerDictionary(players):
         newStats.append(players['min_played'][row])         #6
         newStats.append(players['3PT_rate'][row])           #7
         newStats.append(players['FT_rate'][row])            #8
-        newStats.append(players['total_RB_%'][row])         #9
-        newStats.append(players['assist_%'][row])           #10
-        newStats.append(players['steal_%'][row])            #11
-        newStats.append(players['block_%'][row])            #12
-        newStats.append(players['turnover_%'][row])         #13
+        newStats.append(players['total_RB_perc'][row])         #9
+        newStats.append(players['assist_perc'][row])           #10
+        newStats.append(players['steal_perc'][row])            #11
+        newStats.append(players['block_perc'][row])            #12
+        newStats.append(players['turnover_perc'][row])         #13
         newStats.append(players['FG'][row])                 #14
         newStats.append(players['FG_attempts'][row])        #15
-        newStats.append(players['FG_%'][row])               #16
+        newStats.append(players['FG_perc'][row])               #16
         newStats.append(players['2PT'][row])                #17
         newStats.append(players['2PT_attempts'][row])       #18
-        newStats.append(players['2PT_%'][row])              #19
+        newStats.append(players['2PT_perc'][row])              #19
         newStats.append(players['3PT'][row])                #20
         newStats.append(players['3PT_attempts'][row])       #21
-        newStats.append(players['3PT_%'][row])              #22
+        newStats.append(players['3PT_perc'][row])              #22
         newStats.append(players['FT'][row])                 #23
         newStats.append(players['FT_attempts'][row])        #24
-        newStats.append(players['FT_%'][row])               #25
+        newStats.append(players['FT_perc'][row])               #25
         newStats.append(players['Off_rebounds'][row])       #26
         newStats.append(players['Def_rebounds'][row])       #27
         newStats.append(players['all_rebounds'][row])       #28
@@ -96,13 +100,30 @@ def createPlayerDictionary(players):
         newStats.append(players['turnovers'][row])          #32
         newStats.append(players['fouls'][row])              #33
         newStats.append(players['points'][row])             #34
-        player_stats[name].append(newStats)
-
+        playerStats[name].append(newStats)
+        playerArr.append(newStats)
         row += 1
 
-    return player_stats
+    return playerStats, playerArr
+
+#make sure there are non NaN - don't want to remove incomplete entries because some analysis might only need columsn that are present
+#might not need this
+def prepareDataSQL(playerData):
+
+    arrangedData = createPlayerDictionary(playerData)
+
+    playerArr = arrangedData[1]
+
+    for elem in playerArr:
+        for i in range(len(elem)):
+            if isinstance(elem[i], float):
+                if math.isnan(elem[i]):
+                    elem[i] = -99.0
 
 
+    return playerArr
+
+#graph practice
 def scoring_graph(player_stats):
 
     total_points = []
@@ -116,18 +137,40 @@ def scoring_graph(player_stats):
 
     return season, total_points, fg_attempts
 
-
-
-
 def main():
 
+    filename = 'nba-players-stats/Seasons_Stats.csv'
+    #playerData = extractData(filename)
 
-    player_data = extractData()
+    '''columns = []
+    for elem in playerData.keys():
+        columns.append(elem)'''
+    #addColumnsSQL(columns)
+    data = {}
 
-    player_dic = createPlayerDictionary(player_data)
+    #playerData = prepareDataSQL(playerData)
+
+    columns     = ["name", "season"]
+    comparisons = ["LIKE", "="]
+    values      = ["Le%", "2017"]
+    table       = "playerStats"
+
+    #retrieveDataSQL(columns, comparisons, values, table)
+
+    '''for elem in columns:
+        if elem != "name" and elem != "team":
+            changeColumnType(elem, "FLOAT(7,3)")'''
 
 
-    LBJ = scoring_graph(player_dic['LeBron James'])
+
+    returnColumns(["turnovers"], "playerStats")
+    #addDataSQL(columns, playerData)
+
+
+    '''print(player_dic["LeBron James"][0])'''
+
+
+    '''LBJ = scoring_graph(player_dic['LeBron James'])
     KD  = scoring_graph(player_dic['Kevin Durant'])
     JH  = scoring_graph(player_dic['James Harden'])
 
@@ -150,7 +193,7 @@ def main():
 
     plt.xticks(np.arange(start_season, end_season + 1, 1.0))
 
-    plt.show()
+    plt.show()'''
 
     return
 
