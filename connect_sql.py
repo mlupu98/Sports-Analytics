@@ -12,6 +12,9 @@ def connect():
 
     return mydb
 
+
+
+#Creates a database and takes in the db name as a parameter
 def createDatabase(dbname):
 
     mydb = connect()
@@ -33,22 +36,34 @@ def createDatabase(dbname):
     return retVal
 
 
-def addColumnsSQL(columnNames):
+
+#create a table and initialize the first column - can't create table without any columns
+def createTable(tableName, firstCol, firstColType):
+
+    mydb = connect()
+
+    mycursor = mydb.cursor()
+
+    sqlFormula = "CREATE TABLE " + tableName + " " + firstCol + " " + firstColType
+
+    mycursor.execute(sqlFormula)
+
+
+
+#adds columns to table
+def addColumnsSQL(columnNames, columnTypes, tableName):
 
     mydb = connect()
 
     mycursor = mydb.cursor()
 
     #Create a table with givemn columns and column sizes in given databse
-    columns = columnNames
-    #["name", "age"]
-
-    #mycursor.execute("CREATE TABLE playerStats (name VARCHAR (255))")
-
-    for elem in columns[1:]:
-        mycursor.execute("ALTER TABLE playerStats ADD " + elem + " FLOAT(4,2) NOT NULL")
+    for i in range(columnNames):
+        mycursor.execute("ALTER TABLE playerStats ADD " + columnNames[i] + " " + columnTypes[i] + " NOT NULL")
 
     return
+
+
 
 #change the data type of a specific column
 def changeColumnType(name, type):
@@ -61,21 +76,18 @@ def changeColumnType(name, type):
 
     return
 
+
+
+#Insert values into the table
 def addDataSQL(columnNames, playerData):
 
     mydb = connect()
 
     mycursor = mydb.cursor()
 
-    #mydb.commit()
-
-    #show us the available tables
-    '''mycursor.execute("SHOW TABLES")'''
-
     #insert the following tuples !!!!IF YOU MAKE A CHANGE TO DB YOU NEED TO ADD mydb.commit()!!!!
 
     columns = "(" + columnNames[0]
-
     for elem in columnNames[1:]:
         add = ", " + elem
         columns += add
@@ -110,6 +122,8 @@ def addDataSQL(columnNames, playerData):
 
     return
 
+
+
 #columnArr contains the columns name, comparisonTerms is either LIKE or = and valueArr is the specific value to be looking for
 #NOTE: remember that if you use like to add % where other characters are expected in the valueArr
 def retrieveDataSQL(columnArr, comparisonTerms, valueArr, tableName):
@@ -136,7 +150,9 @@ def retrieveDataSQL(columnArr, comparisonTerms, valueArr, tableName):
 
     return result
 
-#return specific columns from given table
+
+
+#return specified columns from given table
 def returnColumns(columns, table):
 
     mydb = connect()
@@ -159,6 +175,7 @@ def returnColumns(columns, table):
     #myresult.dropna()
 
     return myresult
+
 
 
 #update a elem in the table - not sure if currently necessary since I am taking in data directly from csv
@@ -194,6 +211,8 @@ def orderTable(column, mode, tableName):
     return
 
 
+
+#delete an element from a specified table
 def deleteElem(columnArr, comparisonTerms, valueArr, tableName):
 
     mydb = connect()
@@ -217,6 +236,9 @@ def deleteElem(columnArr, comparisonTerms, valueArr, tableName):
 
     return
 
+
+
+#remove a colum from specified table
 def dropColumn(columns, tableName):
 
     mydb = connect()
@@ -232,6 +254,9 @@ def dropColumn(columns, tableName):
 
     mycursor.execute(sqlFormula)
 
+
+
+#delete a specified table
 def deleteTable(tableName):
 
     mydb = connect()
@@ -246,6 +271,8 @@ def deleteTable(tableName):
     mydb.commit
 
     return
+
+
 
 if __name__ == '__addColumnsSQL__':
     addColumnsSQL()
