@@ -5,7 +5,7 @@ import numpy as np
 from collections import defaultdict
 import pandas as pd
 #import matplotlib.pyplot as plt
-from connect_sql import addColumnsSQL, addDataSQL, changeColumnType, retrieveDataSQL, returnColumns
+from connect_sql import addColumnsSQL, addDataSQL, changeColumnType, retrieveDataSQL, returnColumns, createTable, deleteTableSQL, deleteElemSQL, dropColumns
 
 #Extract data from the csv file
 def extractData(filename):
@@ -112,6 +112,8 @@ def prepareDataSQL(playerData):
 
     arrangedData = createPlayerDictionary(playerData)
 
+    #print(arrangedData)
+
     playerArr = arrangedData[1]
 
     for elem in playerArr:
@@ -140,34 +142,39 @@ def scoring_graph(player_stats):
 def main():
 
     filename = 'nba-players-stats/Seasons_Stats.csv'
-    #playerData = extractData(filename)
+    playerData = extractData(filename)
+    finalData = createPlayerDictionary(playerData)
 
-    '''columns = []
+    tableName = "nbaPlayerStats"
+
+    columns = []
     for elem in playerData.keys():
-        columns.append(elem)'''
-    #addColumnsSQL(columns)
-    data = {}
+        columns.append(elem)
 
-    #playerData = prepareDataSQL(playerData)
+    dataTypes = []
+    for elem in playerData.keys():
+        if elem == "name" or elem == "team":
+            dataTypes.append("VARCHAR(255)")
+        else:
+            dataTypes.append("FLOAT(7,3)")
 
-    columns     = ["name", "season"]
+    createTable(tableName, columns[0], dataTypes[0])
+
+    addColumnsSQL(tableName, columns[1:], dataTypes[1:])
+
+    finalData = prepareDataSQL(playerData)
+
+    addDataSQL(tableName, columns, finalData)
+
+
+    '''columns     = ["name", "season"]
     comparisons = ["LIKE", "="]
     values      = ["Le%", "2017"]
-    table       = "playerStats"
+    table       = "playerStats"'''
 
-    #retrieveDataSQL(columns, comparisons, values, table)
+    #print(returnColumns("nbaPlayerStats", ["name","season"]))
 
-    '''for elem in columns:
-        if elem != "name" and elem != "team":
-            changeColumnType(elem, "FLOAT(7,3)")'''
-
-
-
-    returnColumns(["turnovers"], "playerStats")
-    #addDataSQL(columns, playerData)
-
-
-    '''print(player_dic["LeBron James"][0])'''
+    #deleteElemSQL(tableName, col, comp, val)
 
 
     '''LBJ = scoring_graph(player_dic['LeBron James'])

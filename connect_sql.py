@@ -5,7 +5,7 @@ def connect():
     mydb = mysql.connector.connect(
         host         = "localhost",
         user         = "root",
-        passwd       = "12345678",
+        passwd       = "mcsr7531",
         ssl_disabled = "True",
         database     = "nbaStats"
     )
@@ -44,22 +44,22 @@ def createTable(tableName, firstCol, firstColType):
 
     mycursor = mydb.cursor()
 
-    sqlFormula = "CREATE TABLE " + tableName + " " + firstCol + " " + firstColType
+    sqlFormula = "CREATE TABLE " + tableName + " (" + firstCol + " " + firstColType + ")"
 
     mycursor.execute(sqlFormula)
 
 
 
 #adds columns to table
-def addColumnsSQL(columnNames, columnTypes, tableName):
+def addColumnsSQL(tableName, columnNames, columnTypes):
 
     mydb = connect()
 
     mycursor = mydb.cursor()
 
     #Create a table with givemn columns and column sizes in given databse
-    for i in range(columnNames):
-        mycursor.execute("ALTER TABLE playerStats ADD " + columnNames[i] + " " + columnTypes[i] + " NOT NULL")
+    for i in range(len(columnNames)):
+        mycursor.execute("ALTER TABLE " + tableName + " ADD " + columnNames[i] + " " + columnTypes[i] + " NOT NULL")
 
     return
 
@@ -79,7 +79,7 @@ def changeColumnType(name, type):
 
 
 #Insert values into the table
-def addDataSQL(columnNames, playerData):
+def addDataSQL(tableName, columnNames, playerData):
 
     mydb = connect()
 
@@ -101,24 +101,11 @@ def addDataSQL(columnNames, playerData):
 
     values += ")"
 
-    sqlFormula = "INSERT INTO playerStats " + columns + " VALUES " + values
-
-    #sqlFormula = "INSERT INTO practicePlayers (name, season) VALUES (%s, %s)"=
+    sqlFormula = "INSERT INTO " + tableName + " " + columns + " VALUES " + values
 
     mycursor.executemany(sqlFormula, playerData)
 
     mydb.commit()
-
-    '''for i in range(0, playerData[len(columnNames[0])]):
-           for elem in columnNames:'''
-
-    '''players = [("Lebron James", [2018, 2019]),
-               ("James Harden", [2018, 2019]),
-               ("Kevin Durant", [2020, 2021])]
-
-    mycursor.executemany(sqlFormula, players)
-
-    mydb.commit()'''
 
     return
 
@@ -126,7 +113,7 @@ def addDataSQL(columnNames, playerData):
 
 #columnArr contains the columns name, comparisonTerms is either LIKE or = and valueArr is the specific value to be looking for
 #NOTE: remember that if you use like to add % where other characters are expected in the valueArr
-def retrieveDataSQL(columnArr, comparisonTerms, valueArr, tableName):
+def retrieveDataSQL(tableName, columnArr, comparisonTerms, valueArr):
 
     sqlFormula = "SELECT * FROM " + tableName + " WHERE"
 
@@ -153,7 +140,7 @@ def retrieveDataSQL(columnArr, comparisonTerms, valueArr, tableName):
 
 
 #return specified columns from given table
-def returnColumns(columns, table):
+def returnColumns(tableName, columns):
 
     mydb = connect()
     mycursor = mydb.cursor()
@@ -165,11 +152,12 @@ def returnColumns(columns, table):
         sqlFormula += add
 
 
-    sqlFormula += " FROM " + table
+    sqlFormula += " FROM " + tableName
 
     mycursor.execute(sqlFormula)
     
     myresult = mycursor.fetchall() #or fetchone
+
 
     #drops all NaN in a pd dataframe
     #myresult.dropna()
@@ -213,7 +201,7 @@ def orderTable(column, mode, tableName):
 
 
 #delete an element from a specified table
-def deleteElem(columnArr, comparisonTerms, valueArr, tableName):
+def deleteElemSQL(tableName, columnArr, comparisonTerms, valueArr):
 
     mydb = connect()
     mycursor = mydb.cursor()
@@ -230,7 +218,7 @@ def deleteElem(columnArr, comparisonTerms, valueArr, tableName):
         sqlFormula += addCondition
         multiple = True
 
-    mycursor.execute(deleteElem)
+    mycursor.execute(sqlFormula)
     
     mydb.commit()
 
@@ -239,7 +227,7 @@ def deleteElem(columnArr, comparisonTerms, valueArr, tableName):
 
 
 #remove a colum from specified table
-def dropColumn(columns, tableName):
+def dropColumns(tableName, columns):
 
     mydb = connect()
     mycursor = mydb.cursor()
@@ -257,7 +245,7 @@ def dropColumn(columns, tableName):
 
 
 #delete a specified table
-def deleteTable(tableName):
+def deleteTableSQL(tableName):
 
     mydb = connect()
 
