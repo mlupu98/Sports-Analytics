@@ -183,6 +183,8 @@ def updateElem():
 
     return
 
+
+
 #mode is the criteria by which the elements should be ordered, i.e. DESC
 def orderTable(column, mode, tableName):
 
@@ -224,6 +226,18 @@ def deleteElemSQL(tableName, columnArr, comparisonTerms, valueArr):
 
     return
 
+def get_column_names(tableName):
+
+    mydb = connect()
+    mycursor = mydb.cursor()
+
+    sqlFormula = "SELECT * FROM " + tableName
+
+    mycursor.execute(sqlFormula)
+
+    columns = mycursor.column_names
+
+    return columns
 
 
 #remove a colum from specified table
