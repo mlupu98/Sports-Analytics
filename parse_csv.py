@@ -48,6 +48,7 @@ def extractData(filename):
         players['turnovers'] = df.TOV
         players['fouls'] = df.PF
         players['points'] = df.PTS
+        players['pos']  = df.Pos
 
 
     return players
@@ -100,6 +101,8 @@ def createPlayerDictionary(players):
         newStats.append(players['turnovers'][row])          #32
         newStats.append(players['fouls'][row])              #33
         newStats.append(players['points'][row])             #34
+        newStats.append(players['pos'][row])                #35
+
         playerStats[name].append(newStats)
         playerArr.append(newStats)
         row += 1
@@ -139,6 +142,16 @@ def scoring_graph(player_stats):
 
     return season, total_points, fg_attempts
 
+def column_names(filename):
+
+    playerData = extractData(filename)
+
+    columns = []
+    for elem in playerData.keys():
+        columns.append(elem)
+
+    return columns
+
 def main():
 
     filename = 'nba-players-stats/Seasons_Stats.csv'
@@ -153,7 +166,7 @@ def main():
 
     dataTypes = []
     for elem in playerData.keys():
-        if elem == "name" or elem == "team":
+        if elem == "name" or elem == "team" or elem == "pos":
             dataTypes.append("VARCHAR(255)")
         else:
             dataTypes.append("FLOAT(7,3)")
