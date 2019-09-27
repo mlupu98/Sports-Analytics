@@ -13,6 +13,10 @@ def extractData(filename):
 
     with open(filename, "r") as csvFile:
         df = pd.read_csv(csvFile)
+        for col in df.columns:
+            players[col] = df[col]
+        '''print(df.columns)
+        return
         players['name'] = df.Player
         players['season'] = df.Year
         players['age'] = df.Age
@@ -48,7 +52,7 @@ def extractData(filename):
         players['turnovers'] = df.TOV
         players['fouls'] = df.PF
         players['points'] = df.PTS
-        players['pos']  = df.Pos
+        players['pos']  = df.Pos'''
 
 
     return players
@@ -61,11 +65,14 @@ def createPlayerDictionary(players):
 
     row = 0
 
-    for name in players['name']:
+    for name in players['player_name']:
         if name not in playerStats:
             playerStats[name] = []
 
         newStats = []
+        for elem in players.keys():
+            newStats.append(players[elem][row])
+        '''
         newStats.append(players['name'][row])               #0
         newStats.append(players['season'][row])             #1
         newStats.append(players['age'][row])                #2
@@ -101,7 +108,7 @@ def createPlayerDictionary(players):
         newStats.append(players['turnovers'][row])          #32
         newStats.append(players['fouls'][row])              #33
         newStats.append(players['points'][row])             #34
-        newStats.append(players['pos'][row])                #35
+        newStats.append(players['pos'][row])                #35'''
 
         playerStats[name].append(newStats)
         playerArr.append(newStats)
@@ -124,6 +131,9 @@ def prepareDataSQL(playerData):
             if isinstance(elem[i], float):
                 if math.isnan(elem[i]):
                     elem[i] = -99.0
+            if isinstance(elem[i], (int, np.int64)):
+                #print(elem[i], "its int 64")
+                elem[i] = elem[i].astype(float)
 
 
     return playerArr
@@ -154,30 +164,40 @@ def column_names(filename):
 
 def main():
 
-    filename = 'nba-players-stats/Seasons_Stats.csv'
+    filename = 'shot_logs.csv'
     playerData = extractData(filename)
-    finalData = createPlayerDictionary(playerData)
 
-    tableName = "nbaPlayerStats"
+    #finalData = createPlayerDictionary(playerData)
+
+    tableName = "nbaShotStats"
 
     columns = []
     for elem in playerData.keys():
         columns.append(elem)
 
-    dataTypes = []
+    '''dataTypes = []
     for elem in playerData.keys():
-        if elem == "name" or elem == "team" or elem == "pos":
+        if elem == "MATCHUP" or elem == "W" or elem == "LOCATION" or elem == "SHOT_RESULT" or elem == "CLOSEST_DEFENDER" or elem == "player_name":
             dataTypes.append("VARCHAR(255)")
+        elif elem == "GAME_CLOCK":
+            dataTypes.append("TIME")
+        elif elem == "SHOT_CLOCK" or elem == "TOUCH_TIME" or elem == "SHOT_DIST" or elem == "CLOSE_DEF_DIST":
+            dataTypes.append("FLOAT(4,2)")
         else:
-            dataTypes.append("FLOAT(7,3)")
+            dataTypes.append("INT")
 
     createTable(tableName, columns[0], dataTypes[0])
 
     addColumnsSQL(tableName, columns[1:], dataTypes[1:])
 
+    #changeColumnType(tableName, "GAME_ID", "INT")'''
+
+    changeColumnType(tableName, "TOUCH_TIME", "FLOAT(5,2)")
+
     finalData = prepareDataSQL(playerData)
 
     addDataSQL(tableName, columns, finalData)
+
 
 
     '''columns     = ["name", "season"]
